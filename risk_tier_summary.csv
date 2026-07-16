@@ -1,0 +1,4 @@
+risk_tier,num_customers,default_rate_pct,avg_income,avg_credit_limit,avg_utilization_pct,avg_apr
+Low Risk,14012,3.0,58872.0,15113.0,18.7,14.17
+Medium Risk,24936,6.84,58640.0,14738.0,41.3,14.67
+High Risk,11052,15.71,58564.0,14424.0,63.7,15.1

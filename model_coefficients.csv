@@ -1,0 +1,7 @@
+feature,coefficient,odds_ratio_per_1sd
+utilization_rate,0.562,1.755
+num_delinquencies_24mo,0.349,1.417
+income,-0.306,0.736
+tenure_months,-0.14,0.869
+credit_score,-0.138,0.872
+current_apr,0.137,1.147

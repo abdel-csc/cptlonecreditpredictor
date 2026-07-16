@@ -1,0 +1,357 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Credit Line Increase Targeting — Risk-Adjusted Business Case</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Source+Serif+4:opsz,wght@8..60,600;8..60,700&family=Inter:wght@400;500;600&family=IBM+Plex+Mono:wght@500;600&display=swap" rel="stylesheet">
+<script src="./vendor/chart.umd.js"></script>
+<style>
+  :root {
+    --navy: #12172B;
+    --paper: #F5F6F4;
+    --ink: #1B1D22;
+    --teal: #1F6F54;
+    --brick: #A83B2A;
+    --gold: #C9A227;
+    --gray: #6B7280;
+    --line: #DCDDD9;
+  }
+  * { box-sizing: border-box; }
+  html { scroll-behavior: smooth; }
+  body {
+    margin: 0;
+    background: var(--paper);
+    color: var(--ink);
+    font-family: 'Inter', sans-serif;
+    line-height: 1.55;
+  }
+  h1, h2, h3 { font-family: 'Source Serif 4', serif; font-weight: 700; margin: 0; }
+  .mono { font-family: 'IBM Plex Mono', monospace; font-variant-numeric: tabular-nums; }
+  .wrap { max-width: 980px; margin: 0 auto; padding: 0 28px; }
+
+  /* ---- Hero ---- */
+  .hero {
+    background: var(--navy);
+    color: #F0F1E8;
+    padding: 72px 0 64px;
+  }
+  .eyebrow {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 12.5px;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: #8FA396;
+    margin-bottom: 18px;
+  }
+  .hero h1 {
+    font-size: clamp(30px, 4.4vw, 46px);
+    line-height: 1.12;
+    max-width: 15ch;
+    margin-bottom: 20px;
+  }
+  .hero p.sub {
+    max-width: 56ch;
+    color: #C7CBC2;
+    font-size: 16.5px;
+    margin-bottom: 40px;
+  }
+  .hero-stats {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 1px;
+    background: rgba(255,255,255,0.14);
+    border: 1px solid rgba(255,255,255,0.14);
+    border-radius: 3px;
+    overflow: hidden;
+  }
+  .hero-stat { background: var(--navy); padding: 20px 22px; }
+  .hero-stat .label { font-size: 12px; color: #8FA396; text-transform: uppercase; letter-spacing: 0.06em; margin-bottom: 8px; }
+  .hero-stat .value { font-size: 26px; font-weight: 600; color: #F0F1E8; }
+  .hero-stat .value.gold { color: var(--gold); }
+
+  /* ---- Sections ---- */
+  section { padding: 56px 0; border-bottom: 1px solid var(--line); }
+  .kicker { font-family: 'IBM Plex Mono', monospace; font-size: 12px; color: var(--gray); text-transform: uppercase; letter-spacing: 0.1em; margin-bottom: 10px; }
+  section h2 { font-size: 27px; margin-bottom: 14px; max-width: 32ch; }
+  section > .wrap > p.lede { max-width: 66ch; color: #3A3D42; font-size: 15.5px; margin-bottom: 32px; }
+  .chart-box { background: #fff; border: 1px solid var(--line); border-radius: 6px; padding: 24px; }
+  .sql-box { margin-top: 16px; background: var(--navy); border-radius: 6px; padding: 20px 22px; }
+  .sql-label { font-family: 'IBM Plex Mono', monospace; font-size: 11.5px; color: #8FA396; text-transform: uppercase; letter-spacing: 0.06em; margin-bottom: 12px; }
+  .sql-box pre { margin: 0; overflow-x: auto; }
+  .sql-box code { font-family: 'IBM Plex Mono', monospace; font-size: 13px; line-height: 1.65; color: #D8DCCF; }
+
+  /* ---- Calculator ---- */
+  .calc-grid { display: grid; grid-template-columns: 1.1fr 1fr; gap: 36px; align-items: start; }
+  @media (max-width: 800px) { .calc-grid { grid-template-columns: 1fr; } }
+  .control { margin-bottom: 26px; }
+  .control label { display: flex; justify-content: space-between; font-size: 13.5px; font-weight: 500; margin-bottom: 8px; }
+  .control label .val { font-family: 'IBM Plex Mono', monospace; color: var(--navy); font-weight: 600; }
+  input[type=range] {
+    width: 100%; height: 4px; border-radius: 2px; appearance: none;
+    background: var(--line); outline: none;
+  }
+  input[type=range]::-webkit-slider-thumb {
+    appearance: none; width: 16px; height: 16px; border-radius: 50%;
+    background: var(--gold); cursor: pointer; border: 2px solid var(--navy);
+  }
+  .control .hint { font-size: 12px; color: var(--gray); margin-top: 6px; }
+
+  .ledger {
+    background: var(--navy); border-radius: 6px; padding: 26px 28px; color: #F0F1E8;
+  }
+  .ledger .row { display: flex; justify-content: space-between; align-items: baseline; padding: 11px 0; border-bottom: 1px solid rgba(255,255,255,0.1); }
+  .ledger .row:last-child { border-bottom: none; }
+  .ledger .row .k { font-size: 13px; color: #9CA3AF; }
+  .ledger .row .v { font-family: 'IBM Plex Mono', monospace; font-size: 16px; font-weight: 600; }
+  .ledger .row.total .v { font-size: 22px; color: var(--gold); }
+  .ledger .row.total .k { color: #C7CBC2; font-size: 13.5px; }
+  .delta { font-size: 11.5px; margin-left: 8px; }
+  .delta.up { color: #6FCF97; }
+  .delta.down { color: #EB8A7C; }
+
+  footer { padding: 40px 0 80px; }
+  footer .kicker { margin-bottom: 16px; }
+  footer ul { padding-left: 18px; color: #3A3D42; font-size: 14.5px; }
+  footer li { margin-bottom: 10px; }
+  footer a { color: var(--navy); }
+
+  .badge { display: inline-block; font-family: 'IBM Plex Mono', monospace; font-size: 11.5px; padding: 3px 8px; border-radius: 3px; margin-left: 8px; }
+  .badge.synthetic { background: #EFE6C4; color: #6B5A16; }
+</style>
+</head>
+<body>
+
+<div class="hero">
+  <div class="wrap">
+    <div class="eyebrow">Credit Portfolio Strategy — Risk-Adjusted Targeting</div>
+    <h1>A smaller lending program that makes more money.</h1>
+    <p class="sub">
+      A risk model trained on cardholder behavior shows that a proposed
+      Credit Line Increase program is quietly targeting some of its
+      riskiest available customers, and that cutting them out increases
+      expected profit rather than just avoiding losses.
+    </p>
+    <div class="hero-stats">
+      <div class="hero-stat">
+        <div class="label">Naive rule, net value</div>
+        <div class="value" id="stat-naive">$118,081</div>
+      </div>
+      <div class="hero-stat">
+        <div class="label">Model-refined, net value</div>
+        <div class="value gold" id="stat-refined">$130,476</div>
+      </div>
+      <div class="hero-stat">
+        <div class="label">ROI improvement</div>
+        <div class="value gold">+74%</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<section>
+  <div class="wrap">
+    <div class="kicker">01 — What actually drives default risk</div>
+    <h2>Utilization matters more than credit score.</h2>
+    <p class="lede">
+      A logistic regression trained on the existing portfolio (AUC 0.72, edging out a
+      gradient boosting benchmark at 0.71) shows utilization rate as the strongest
+      single predictor of default, ahead of delinquency history and credit score.
+      Values above 1.0 increase odds of default per standard deviation; below 1.0
+      is protective.
+    </p>
+    <div class="chart-box"><canvas id="coefChart" height="90"></canvas></div>
+  </div>
+</section>
+
+<section>
+  <div class="wrap">
+    <div class="kicker">02 — Why that's a problem for this program</div>
+    <h2>The eligibility rule selects for the risk factor that matters most.</h2>
+    <p class="lede">
+      The proposed program targets cardholders using 60%+ of their limit, exactly
+      the feature the model flags as the top risk driver. The result: a pool that
+      looks safe on paper (zero delinquencies) but runs meaningfully hotter than
+      the portfolio's genuinely low-risk tier.
+    </p>
+    <div class="chart-box"><canvas id="tierChart" height="90"></canvas></div>
+    <div class="sql-box">
+      <div class="sql-label">The query behind this chart — run against SQLite, not pandas</div>
+      <pre><code>SELECT
+    CASE
+        WHEN utilization_rate &lt; 0.30 AND num_delinquencies_24mo = 0 THEN 'Low Risk'
+        WHEN utilization_rate &lt; 0.60 AND num_delinquencies_24mo &lt;= 1 THEN 'Medium Risk'
+        ELSE 'High Risk'
+    END AS risk_tier,
+    COUNT(*) AS num_customers,
+    ROUND(AVG(default_12mo) * 100, 2) AS default_rate_pct,
+    ROUND(AVG(income), 0) AS avg_income,
+    ROUND(AVG(utilization_rate) * 100, 1) AS avg_utilization_pct
+FROM portfolio
+GROUP BY risk_tier
+ORDER BY default_rate_pct;</code></pre>
+    </div>
+  </div>
+</section>
+
+<section>
+  <div class="wrap">
+    <div class="kicker">03 — Run the numbers yourself</div>
+    <h2>Move the assumptions. Watch the recommendation hold.</h2>
+    <p class="lede">
+      Every number below is a real, adjustable input, this recomputes live
+      against the actual model output (5,175 eligible customers, binned by
+      predicted default probability). Drag the risk cutoff to see where the
+      naive program stops being the better choice.
+    </p>
+    <div class="calc-grid">
+      <div>
+        <div class="control">
+          <label>Credit line increase <span class="val"><span id="v-cli">30</span>%</span></label>
+          <input type="range" id="cli" min="10" max="50" value="30" step="5">
+          <div class="hint">How much each eligible customer's limit rises.</div>
+        </div>
+        <div class="control">
+          <label>Utilization of new limit <span class="val"><span id="v-util">15</span>%</span></label>
+          <input type="range" id="util" min="5" max="30" value="15" step="1">
+          <div class="hint">Share of the new credit customers actually use.</div>
+        </div>
+        <div class="control">
+          <label>Loss given default <span class="val"><span id="v-lgd">100</span>%</span></label>
+          <input type="range" id="lgd" min="40" max="100" value="100" step="5">
+          <div class="hint">Share of exposure lost if a customer defaults (100% = conservative).</div>
+        </div>
+        <div class="control">
+          <label>Exclude riskiest <span class="val"><span id="v-cut">25</span>% of pool</span></label>
+          <input type="range" id="cut" min="0" max="60" value="25" step="5">
+          <div class="hint">0% reproduces the naive rule with no model refinement.</div>
+        </div>
+      </div>
+      <div class="ledger">
+        <div class="row"><span class="k">Customers targeted</span><span class="v mono" id="l-count">—</span></div>
+        <div class="row"><span class="k">Incremental revenue</span><span class="v mono" id="l-rev">—</span></div>
+        <div class="row"><span class="k">Incremental expected loss</span><span class="v mono" id="l-loss">—</span></div>
+        <div class="row total"><span class="k">Net expected value</span><span class="v mono" id="l-net">—</span></div>
+        <div class="row"><span class="k">ROI</span><span class="v mono" id="l-roi">—</span></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<footer>
+  <div class="wrap">
+    <div class="kicker">Methodology &amp; caveats <span class="badge synthetic">synthetic data</span></div>
+    <ul>
+      <li>Built on a 50,000-row synthetic card portfolio with explicit, documented ground-truth relationships, not real Capital One or bank data.</li>
+      <li>Logistic regression coefficients and AUC are real outputs of a model trained on that synthetic data, not illustrative placeholders.</li>
+      <li>The calculator above reproduces the same math as the Python business-case script, aggregated into 20 risk bins so it can run client-side with no backend.</li>
+      <li>Full pipeline (data generation → SQL segmentation → modeling → business case) and the one-page memo this dashboard summarizes are in <a href="https://github.com/abdel-csc/cptlonecreditpredictor" target="_blank">the GitHub repository</a>.</li>
+    </ul>
+  </div>
+</footer>
+
+<script>
+const DATA = {"bins": [{"bin": 0, "count": 259, "avg_credit_limit": 17202.3398, "avg_apr": 12.4927, "avg_predicted_default_prob": 0.0402, "max_predicted_default_prob": 0.0491}, {"bin": 1, "count": 259, "avg_credit_limit": 16625.2046, "avg_apr": 12.746, "avg_predicted_default_prob": 0.0536, "max_predicted_default_prob": 0.0581}, {"bin": 2, "count": 259, "avg_credit_limit": 16196.2201, "avg_apr": 13.1904, "avg_predicted_default_prob": 0.062, "max_predicted_default_prob": 0.0655}, {"bin": 3, "count": 258, "avg_credit_limit": 16116.9419, "avg_apr": 13.0379, "avg_predicted_default_prob": 0.0686, "max_predicted_default_prob": 0.0717}, {"bin": 4, "count": 259, "avg_credit_limit": 15812.973, "avg_apr": 13.4229, "avg_predicted_default_prob": 0.0743, "max_predicted_default_prob": 0.0773}, {"bin": 5, "count": 259, "avg_credit_limit": 15737.2703, "avg_apr": 13.4192, "avg_predicted_default_prob": 0.0803, "max_predicted_default_prob": 0.0827}, {"bin": 6, "count": 258, "avg_credit_limit": 15567.9225, "avg_apr": 13.6077, "avg_predicted_default_prob": 0.085, "max_predicted_default_prob": 0.0874}, {"bin": 7, "count": 259, "avg_credit_limit": 15405.722, "avg_apr": 13.8228, "avg_predicted_default_prob": 0.0903, "max_predicted_default_prob": 0.0928}, {"bin": 8, "count": 259, "avg_credit_limit": 15234.9344, "avg_apr": 13.9444, "avg_predicted_default_prob": 0.0953, "max_predicted_default_prob": 0.0977}, {"bin": 9, "count": 259, "avg_credit_limit": 15130.0927, "avg_apr": 14.0515, "avg_predicted_default_prob": 0.1, "max_predicted_default_prob": 0.1023}, {"bin": 10, "count": 258, "avg_credit_limit": 15122.6822, "avg_apr": 14.0299, "avg_predicted_default_prob": 0.1048, "max_predicted_default_prob": 0.1075}, {"bin": 11, "count": 259, "avg_credit_limit": 14932.6409, "avg_apr": 14.2307, "avg_predicted_default_prob": 0.1107, "max_predicted_default_prob": 0.1139}, {"bin": 12, "count": 259, "avg_credit_limit": 14771.1853, "avg_apr": 14.4031, "avg_predicted_default_prob": 0.1169, "max_predicted_default_prob": 0.12}, {"bin": 13, "count": 258, "avg_credit_limit": 14736.8256, "avg_apr": 14.3941, "avg_predicted_default_prob": 0.123, "max_predicted_default_prob": 0.1262}, {"bin": 14, "count": 259, "avg_credit_limit": 14511.9151, "avg_apr": 14.6863, "avg_predicted_default_prob": 0.1298, "max_predicted_default_prob": 0.1336}, {"bin": 15, "count": 259, "avg_credit_limit": 14331.9807, "avg_apr": 14.9461, "avg_predicted_default_prob": 0.1374, "max_predicted_default_prob": 0.1418}, {"bin": 16, "count": 258, "avg_credit_limit": 14179.4302, "avg_apr": 15.1323, "avg_predicted_default_prob": 0.147, "max_predicted_default_prob": 0.153}, {"bin": 17, "count": 259, "avg_credit_limit": 14088.2394, "avg_apr": 15.1436, "avg_predicted_default_prob": 0.1598, "max_predicted_default_prob": 0.1674}, {"bin": 18, "count": 259, "avg_credit_limit": 13825.6139, "avg_apr": 15.4698, "avg_predicted_default_prob": 0.1779, "max_predicted_default_prob": 0.1906}, {"bin": 19, "count": 259, "avg_credit_limit": 13216.5019, "avg_apr": 16.1976, "avg_predicted_default_prob": 0.2224, "max_predicted_default_prob": 0.3478}], "total_candidates": 5175, "model_coefficients": [{"feature": "Utilization Rate", "odds_ratio": 1.755, "direction": "risk"}, {"feature": "Delinquencies (24mo)", "odds_ratio": 1.417, "direction": "risk"}, {"feature": "Current APR", "odds_ratio": 1.147, "direction": "risk"}, {"feature": "Credit Score", "odds_ratio": 0.872, "direction": "protective"}, {"feature": "Tenure (months)", "odds_ratio": 0.869, "direction": "protective"}, {"feature": "Income", "odds_ratio": 0.736, "direction": "protective"}], "risk_tiers": [{"tier": "Low Risk", "default_rate_pct": 3.0}, {"tier": "Medium Risk", "default_rate_pct": 6.84}, {"tier": "High Risk", "default_rate_pct": 15.71}]};
+
+// ---- Static charts ----
+const coefCtx = document.getElementById('coefChart');
+new Chart(coefCtx, {
+  type: 'bar',
+  data: {
+    labels: DATA.model_coefficients.map(d => d.feature),
+    datasets: [{
+      data: DATA.model_coefficients.map(d => d.odds_ratio),
+      backgroundColor: DATA.model_coefficients.map(d => d.direction === 'risk' ? '#A83B2A' : '#1F6F54'),
+      borderRadius: 3,
+    }]
+  },
+  options: {
+    indexAxis: 'y',
+    plugins: { legend: { display: false } },
+    scales: {
+      x: { title: { display: true, text: 'Odds ratio per 1 SD (1.0 = no effect)' }, grid: { color: '#EEEEEA' } },
+      y: { grid: { display: false } }
+    }
+  }
+});
+
+const tierCtx = document.getElementById('tierChart');
+new Chart(tierCtx, {
+  type: 'bar',
+  data: {
+    labels: DATA.risk_tiers.map(d => d.tier),
+    datasets: [{
+      data: DATA.risk_tiers.map(d => d.default_rate_pct),
+      backgroundColor: ['#1F6F54', '#C9A227', '#A83B2A'],
+      borderRadius: 3,
+    }]
+  },
+  options: {
+    plugins: { legend: { display: false } },
+    scales: {
+      y: { title: { display: true, text: '12-month default rate (%)' }, grid: { color: '#EEEEEA' } },
+      x: { grid: { display: false } }
+    }
+  }
+});
+
+// ---- Interactive calculator ----
+const els = {
+  cli: document.getElementById('cli'), vCli: document.getElementById('v-cli'),
+  util: document.getElementById('util'), vUtil: document.getElementById('v-util'),
+  lgd: document.getElementById('lgd'), vLgd: document.getElementById('v-lgd'),
+  cut: document.getElementById('cut'), vCut: document.getElementById('v-cut'),
+  count: document.getElementById('l-count'), rev: document.getElementById('l-rev'),
+  loss: document.getElementById('l-loss'), net: document.getElementById('l-net'),
+  roi: document.getElementById('l-roi'),
+};
+
+function fmtUSD(n) {
+  return '$' + Math.round(n).toLocaleString('en-US');
+}
+
+function recompute() {
+  const cliPct = +els.cli.value / 100;
+  const utilPct = +els.util.value / 100;
+  const lgdPct = +els.lgd.value / 100;
+  const cutPct = +els.cut.value / 100;
+
+  els.vCli.textContent = els.cli.value;
+  els.vUtil.textContent = els.util.value;
+  els.vLgd.textContent = els.lgd.value;
+  els.vCut.textContent = els.cut.value;
+
+  // Bins are pre-sorted by ascending predicted default probability.
+  // "Exclude riskiest X%" drops bins from the top of the sorted list.
+  const bins = DATA.bins;
+  const keepCount = Math.round(bins.length * (1 - cutPct));
+  const kept = bins.slice(0, Math.max(keepCount, 1));
+
+  let totalCustomers = 0, totalRevenue = 0, totalLoss = 0;
+  kept.forEach(b => {
+    const incLimit = b.avg_credit_limit * cliPct;
+    const incBalance = incLimit * utilPct;
+    const revenue = incBalance * (b.avg_apr / 100) * b.count;
+    const loss = incBalance * b.avg_predicted_default_prob * lgdPct * b.count;
+    totalCustomers += b.count;
+    totalRevenue += revenue;
+    totalLoss += loss;
+  });
+
+  const net = totalRevenue - totalLoss;
+  const roi = totalLoss > 0 ? (net / totalLoss) * 100 : 0;
+
+  els.count.textContent = totalCustomers.toLocaleString('en-US');
+  els.rev.textContent = fmtUSD(totalRevenue);
+  els.loss.textContent = fmtUSD(totalLoss);
+  els.net.textContent = fmtUSD(net);
+  els.roi.textContent = roi.toFixed(1) + '%';
+}
+
+['cli', 'util', 'lgd', 'cut'].forEach(id => els[id].addEventListener('input', recompute));
+recompute();
+</script>
+
+</body>
+</html>
